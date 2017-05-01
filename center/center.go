@@ -12,8 +12,10 @@ func Command() cli.Command {
         Flags:  []cli.Flag{
             cli.StringFlag{Name: "port", Value: "8315", Usage: "listening port"},
         },
-        Action: func(c *cli.Context) {
-            fmt.Println("center start")
-        },
+        Action:  start,
     }
+}
+
+func start(c *cli.Context) error {
+    fmt.Println("agent start")
 }
