@@ -23,7 +23,7 @@ func Command() cli.Command {
         Flags:  []cli.Flag{
             cli.StringFlag{Name: "centers", Value: "", Usage: "a list of center addresses, format likes 192.168.1.13:9898"},
             cli.StringFlag{Name: "ip", Value: "localhost", Usage: "listening IP address"},
-            cli.StringFlag{Name: "port", Value: "8923", Usage: "listening port"},
+            cli.IntFlag{Name: "port", Value: 8923, Usage: "listening port"},
         },
         Action: start,
     }
@@ -38,8 +38,8 @@ func start(c *cli.Context) {
     }
 
     fmt.Println("centers:", centers)
-    fmt.Println("local_ip:", c.String("ip"))
-    fmt.Println("local_port:", c.Int("port"))
+    fmt.Println("local_ip:", ip)
+    fmt.Println("local_port:", port)
 
     agent := newAgent(ip + ":" + strconv.Itoa(port), centers)
     agent.run()
