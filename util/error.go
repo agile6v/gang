@@ -7,6 +7,7 @@ import (
 
 const (
 	EXIT_SUCCESS = iota
+    EXIT_ERROR
 	EXIT_BAD_ARGS
 )
 

@@ -16,6 +16,6 @@ func Command() cli.Command {
     }
 }
 
-func start(c *cli.Context) error {
+func start(c *cli.Context) {
     fmt.Println("agent start")
 }

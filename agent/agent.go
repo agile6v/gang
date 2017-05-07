@@ -2,14 +2,18 @@ package agent
 
 import (
     "fmt"
+    "strconv"
     "errors"
+    "strings"
+    "io"
+    "net/http"
     "github.com/urfave/cli"
     . "github.com/agile6v/gang/util"
 )
 
 type Agent struct {
-    listenIp string
-    listenPort int
+    listenOn string
+    centers []string
 }
 
 func Command() cli.Command {
@@ -17,29 +21,44 @@ func Command() cli.Command {
         Name:   "agent",
         Usage:  "start a agent server",
         Flags:  []cli.Flag{
-            cli.StringFlag{Name: "center", Value: "", Usage: "a list of center addresses, format likes 192.168.1.13:9898"},
+            cli.StringFlag{Name: "centers", Value: "", Usage: "a list of center addresses, format likes 192.168.1.13:9898"},
             cli.StringFlag{Name: "ip", Value: "localhost", Usage: "listening IP address"},
-            cli.StringFlag{Name: "port", Value: "8312", Usage: "listening port"},
+            cli.StringFlag{Name: "port", Value: "8923", Usage: "listening port"},
         },
         Action: start,
     }
 }
 
-func start(c *cli.Context) error {
-    center := c.String("center")
-    if center == "" {
+func start(c *cli.Context) {
+    ip := c.String("ip")
+    port := c.Int("port")
+    centers := strings.Split(c.String("centers"), ",")
+    if centers[0] == "" {
         ReturnError(EXIT_BAD_ARGS, errors.New("center is required"))
     }
-    fmt.Println("agent start", center)
+
+    fmt.Println("centers:", centers)
+    fmt.Println("local_ip:", c.String("ip"))
+    fmt.Println("local_port:", c.Int("port"))
+
+    agent := newAgent(ip + ":" + strconv.Itoa(port), centers)
+    agent.run()
 }
 
-func init(ip string, port string, center string) *Agent {
+func newAgent(listenOn string, centers []string) *Agent {
     agent := &Agent{
-
+        listenOn: listenOn,
+        centers: centers,
     }
+    return agent
 }
 
 func (agent *Agent) run() {
-    http.HandleFunc("/jobs", tl.statusHandler)
-    http.ListenAndServe(agent.listenIp , nil)
+    http.HandleFunc("/jobs", agent.getAllJobs)
+    http.ListenAndServe(agent.listenOn , nil)
 }
+
+func (agent *Agent) getAllJobs(w http.ResponseWriter, r *http.Request) {
+    io.WriteString(w, "All jobs!\n")
+}
+
