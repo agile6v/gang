@@ -16,3 +16,12 @@ CREATE TABLE `task` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='crontab';
+
+DROP TABLE IF EXISTS `host`;
+CREATE TABLE `host` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'incremental id',
+  `ip` varchar(128) NOT NULL DEFAULT '' COMMENT 'ip address',
+  `task_id` int(11) NOT NULL DEFAULT '0' COMMENT 'task on this host',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `ip_task` (`ip`,`task_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='the mapping table of host & task ';
