@@ -9,11 +9,13 @@ import (
     "net/http"
     "github.com/urfave/cli"
     . "github.com/agile6v/gang/util"
+    . "github.com/agile6v/gang/common"
 )
 
 type Agent struct {
     listenOn string
     centers []string
+    Tasks map[int64]*Task
 }
 
 func Command() cli.Command {

@@ -15,3 +15,4 @@ func ReturnError(code int, err error) {
 	fmt.Fprintln(os.Stderr, "Error: ", err)
 	os.Exit(code)
 }
+
