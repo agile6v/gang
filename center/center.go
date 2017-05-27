@@ -41,22 +41,15 @@ func start(c *cli.Context) {
 	fmt.Println("local_port:", port)
 	fmt.Println("database:", dsn)
 
-	db := &DB{ Dsn: dsn}
-	m, err := db.GetAllTasks()
-	if err != nil {
-		fmt.Printf("GetAllTasks failure: ", err)
-		os.Exit(-1)
-	}
-
-	for host, tasks := range m {
-		for _, task := range tasks {
-			fmt.Printf("host=%v, task=%s,%d,%s,%s,%s\n", host, task.Name, task.Id, task.Command, task.Args, task.Runner)
-		}
-	}
-
 	center := newCenter(ip+":"+strconv.Itoa(port), dsn)
+	db := &DB{ Dsn: dsn}
 
-    go center.getAllTasks(db)
+    ret := center.getAllTasks(db)
+    if !ret {
+        os.Exit(-1)
+    }
+
+    go center.syncTasks(db)
 
 	center.run()
 }
@@ -69,23 +62,33 @@ func newCenter(listenOn string, database string) *Center {
 	return center
 }
 
-func (center *Center) getAllTasks(db *DB) {
+func (center *Center) getAllTasks(db *DB) bool {
+    m, err := db.GetAllTasks()
+    if err != nil {
+        fmt.Printf("GetAllTasks failure: ", err)
+        return false
+    }
+
+    center.Lock.Lock()
+    center.TaskMap = m
+    center.Lock.Unlock()
+
+    for host, tasks := range m {
+        for _, task := range tasks {
+            fmt.Printf("host=%v, task=%s,%d,%s,%s,%s\n", host, task.Name, task.Id, task.Command, task.Args, task.Runner)
+        }
+    }
+
+    return true
+}
+
+func (center *Center) syncTasks(db *DB) {
 	ticker := time.NewTicker(5 * time.Second)
 	for {
 		select {
 		case <-ticker.C:
 			fmt.Println("center->getAllTasks()")
-            m, err := db.GetAllTasks()
-            if err != nil {
-                fmt.Printf("GetAllTasks failure: ", err)
-                os.Exit(-1)
-            }
-
-            for host, tasks := range m {
-                for _, task := range tasks {
-                    fmt.Printf("host=%v, task=%s,%d,%s,%s,%s\n", host, task.Name, task.Id, task.Command, task.Args, task.Runner)
-                }
-            }
+            center.getAllTasks(db)
 		}
 	}
 	fmt.Println("center->getAllTasks() quit")
