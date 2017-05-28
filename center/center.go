@@ -5,6 +5,7 @@ import (
 	. "github.com/agile6v/gang/common"
 	"github.com/urfave/cli"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -42,14 +43,14 @@ func start(c *cli.Context) {
 	fmt.Println("database:", dsn)
 
 	center := newCenter(ip+":"+strconv.Itoa(port), dsn)
-	db := &DB{ Dsn: dsn}
+	db := &DB{Dsn: dsn}
 
-    ret := center.getAllTasks(db)
-    if !ret {
-        os.Exit(-1)
-    }
+	ret := center.getAllTasks(db)
+	if !ret {
+		os.Exit(-1)
+	}
 
-    go center.syncTasks(db)
+	go center.syncTasks(db)
 
 	center.run()
 }
@@ -63,23 +64,23 @@ func newCenter(listenOn string, database string) *Center {
 }
 
 func (center *Center) getAllTasks(db *DB) bool {
-    m, err := db.GetAllTasks()
-    if err != nil {
-        fmt.Printf("GetAllTasks failure: ", err)
-        return false
-    }
+	m, err := db.GetAllTasks()
+	if err != nil {
+		fmt.Printf("GetAllTasks failure: ", err)
+		return false
+	}
 
-    center.Lock.Lock()
-    center.TaskMap = m
-    center.Lock.Unlock()
+	center.Lock.Lock()
+	center.TaskMap = m
+	center.Lock.Unlock()
 
-    for host, tasks := range m {
-        for _, task := range tasks {
-            fmt.Printf("host=%v, task=%s,%d,%s,%s,%s\n", host, task.Name, task.Id, task.Command, task.Args, task.Runner)
-        }
-    }
+	for host, tasks := range m {
+		for _, task := range tasks {
+			fmt.Printf("host=%v, task=%s,%d,%s,%s,%s\n", host, task.Name, task.Id, task.Command, task.Args, task.Runner)
+		}
+	}
 
-    return true
+	return true
 }
 
 func (center *Center) syncTasks(db *DB) {
@@ -88,7 +89,7 @@ func (center *Center) syncTasks(db *DB) {
 		select {
 		case <-ticker.C:
 			fmt.Println("center->getAllTasks()")
-            center.getAllTasks(db)
+			center.getAllTasks(db)
 		}
 	}
 	fmt.Println("center->getAllTasks() quit")
@@ -100,5 +101,10 @@ func (center *Center) run() {
 }
 
 func (center *Center) handleHeartBeat(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, "HeartBeat!\n")
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	io.WriteString(w, string(body))
 }
