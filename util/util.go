@@ -6,7 +6,7 @@ import (
 )
 
 // https://play.golang.org/p/BDt3qEQ_2H
-func externalIP() (string, error) {
+func ExternalIP() (string, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return "", err

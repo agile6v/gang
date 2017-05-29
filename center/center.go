@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"encoding/json"
 )
 
 type Center struct {
@@ -106,5 +107,52 @@ func (center *Center) handleHeartBeat(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	io.WriteString(w, string(body))
+    var hb HeartbeatReq
+
+    fmt.Printf("heartbeat request: %s\n", string(body))
+
+    err = json.Unmarshal(body, &hb)
+    if err != nil {
+        fmt.Println("error:", err)
+    }
+
+    fmt.Printf("parsed: %+v\n", hb)
+
+    heartbeatResp := &HeartbeatResp{Host: hb.Host}
+    heartbeatResp.Tasks = make(map[int64]*HeartbeatTask)
+
+    fmt.Printf("req-host: %s\n", hb.Host)
+    if len(hb.Tasks) == 0 {
+        for _, task := range center.TaskMap[hb.Host] {
+            heartbeatResp.Tasks[task.Id] = &HeartbeatTask{Task: task, Delete: false}
+            fmt.Printf("taskId: %d\n", task.Id)
+        }
+    } else {
+        // compare directly
+        for _, task := range center.TaskMap[hb.Host] {
+            if v, ok := hb.Tasks[task.Id]; ok {
+                if v != task.Version {
+                    heartbeatResp.Tasks[task.Id] = &HeartbeatTask{Task: task, Delete: false}
+                }
+                delete(hb.Tasks, task.Id)
+            } else {
+                heartbeatResp.Tasks[task.Id] = &HeartbeatTask{Task: task, Delete: false}
+            }
+        }
+
+        for taskId, _ := range hb.Tasks {
+            heartbeatResp.Tasks[taskId] = &HeartbeatTask{Task: &Task{Id: taskId}, Delete: true}
+            fmt.Printf("delete task: %d\n", taskId)
+        }
+    }
+
+    fmt.Printf("%+v\n", heartbeatResp)
+
+    json, err := json.Marshal(heartbeatResp)
+    if err != nil {
+        fmt.Println("heartbeat respose failed : ", err)
+        return
+    }
+
+	io.WriteString(w, string(json))
 }

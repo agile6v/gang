@@ -34,7 +34,7 @@ func (db *DB) GetAllTasks() (map[string][]*Task, error) {
         var group_id int
         var name, runner, command, args, host string
 
-        if err := rows.Scan(&host, &task_id, &group_id,
+        if err := rows.Scan(&host, &group_id, &task_id,
             &name, &runner, &command, &args, &status); err != nil {
             fmt.Println("mysql scan error: ", err)
             continue
