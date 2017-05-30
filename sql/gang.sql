@@ -11,6 +11,7 @@ CREATE TABLE `task` (
     `command` varchar(1024) NOT NULL DEFAULT 'echo' COMMENT 'executable command',
     `args` varchar(1024) NOT NULL DEFAULT '$PATH' COMMENT 'args of the command',
     `status` tinyint(4) NOT NULL DEFAULT '0' COMMENT 'whether to enable, 0:enabled, 1:disabled',
+    `version` int(11) NOT NULL COMMENT 'task version, increasing value',
     `create_time` int(11) NOT NULL DEFAULT '0' COMMENT 'create time',
     `update_time` int(11) NOT NULL DEFAULT '0' COMMENT 'last modified time',
     PRIMARY KEY (`id`),
